@@ -8,10 +8,14 @@ async function main() {
     // console.log(new Date(new Date().setFullYear(new Date().getFullYear() - 1)));
     // console.log(new Date(Date.now()));
     // await createOne(client, {
-    //     name: "Lovely Loft",
-    //     username: "roxyzc",
-    //     age: 18
-    // })
+    //   name: "Infinite Views",
+    //   summary: "Modern home with infinite views from the infinity pool",
+    //   property_type: "House",
+    //   bedrooms: 6,
+    //   bathrooms: 4.5,
+    //   beds: 8,
+    //   datesReserved: [new Date("2021-12-31"), new Date("2022-01-01")],
+    // });
 
     // await createMany(client, [
     // {
@@ -62,14 +66,38 @@ async function main() {
     // await deleteListingNameOrAge(client, "roxyzc");
     // await deleteManyListing(client);
     // await printAggregation(client, "roxyzc", 10)
+    // await createReservation(
+    //   client,
+    //   "roxyzc@gmail.com",
+    //   "roxyzc",
+    //   [new Date("2021-12-31"), new Date("2022-01-01")],
+    //   {
+    //     pricePerNight: 100,
+    //     specialRequests: "Late Checkout",
+    //     breakfastIncluded: true,
+    //   }
+    // );
+    // const coba = createReservationDocument(
+    //   "rozy",
+    //   [
+    //     new Date(new Date().setFullYear(new Date().getFullYear() - 1)),
+    //     new Date(Date.now()),
+    //   ],
+    //   {
+    //     pricePerNigth: 150,
+    //     specialRequests: "Late checkout",
+    //     breakfastIncluded: true,
+    //   }
+    // );
+    // console.log(coba);
     await createReservation(
       client,
-      "roxyzc@gmail.com",
-      "roxyzc",
+      "example@example.com",
+      "Infinite Views",
       [new Date("2021-12-31"), new Date("2022-01-01")],
       {
-        pricePerNight: 100,
-        specialRequests: "Late Checkout",
+        pricePerNigth: 100,
+        specialRequests: "Late checkout",
         breakfastIncluded: true,
       }
     );
@@ -89,10 +117,10 @@ async function createReservation(
   reservationDates,
   reservationDetails
 ) {
-  const usersCollection = client.db("sample").collection("cobaDulu");
+  const usersCollection = client.db("sample").collection("users");
   const listingsAndReviewsCollection = client
     .db("sample")
-    .collection("listingAndReviews");
+    .collection("cobaDoang");
 
   const reservation = createReservationDocument(
     nameOfListing,
@@ -101,7 +129,6 @@ async function createReservation(
   );
 
   const session = client.startSession();
-
   const transactionOptions = {
     readPreference: "primary",
     readConcern: { level: "local" },
@@ -122,12 +149,16 @@ async function createReservation(
         `${usersUpdateResult.modifiedCount} document(s) was/were updated to include the reservation`
       );
 
+      // console.log(reservationDates);
       const isListingReservedResults =
-        await await listingsAndReviewsCollection.findOne(
-          { name: nameOfListing, datesReserved: { $in: reservationDates } },
+        await listingsAndReviewsCollection.findOne(
+          {
+            name: nameOfListing,
+            datesReserved: { $in: reservationDates },
+          },
           { session }
         );
-
+      // console.log(isListingReservedResults);
       if (isListingReservedResults) {
         await session.abortTransaction();
         console.error(
@@ -138,6 +169,7 @@ async function createReservation(
         );
         return;
       }
+
       const listingsAndReviewsUpdateResults =
         await listingsAndReviewsCollection.updateOne(
           {
@@ -146,7 +178,6 @@ async function createReservation(
           { $addToSet: { datesReserved: { $each: reservationDates } } },
           { session }
         );
-
       console.log(
         `${listingsAndReviewsUpdateResults.matchedCount} document(s) found in listingsAndReviews collection with the name ${nameOfListing}`
       );
@@ -154,7 +185,7 @@ async function createReservation(
         `${listingsAndReviewsUpdateResults.modifiedCount} document(s) was/were updated to include tge reservation dates.`
       );
     }, transactionOptions);
-
+    // console.log(transactionResult);
     if (transactionResult) {
       console.log("The reservation was successfully created");
     } else {
