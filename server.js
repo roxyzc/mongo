@@ -1,4 +1,5 @@
 const { MongoClient } = require("mongodb");
+const stream = require("stream");
 require("dotenv/config");
 
 async function main() {
@@ -118,6 +119,24 @@ async function main() {
 }
 
 main().catch(console.error);
+
+async function monitorListingsUsingStreamApi(
+  client,
+  timeInMs = 60000,
+  pipeline = []
+) {
+  const collection = client.db("sample").collection("CobaDoang");
+  const changeStream = collection.watch(pipeline);
+  changeStream.stream().pipe(
+    new stream.Writable({
+      objectMode: true,
+      write: function (doc, _, cb) {
+        console.log(doc);
+        cb();
+      },
+    })
+  );
+}
 
 async function monitorListingsUsingHashNext(
   client,
