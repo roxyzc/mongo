@@ -7,30 +7,28 @@ async function main() {
     await client.connect();
     // console.log(new Date(new Date().setFullYear(new Date().getFullYear() - 1)));
     // console.log(new Date(Date.now()));
-    // await createOne(client, {
-    //   name: "Infinite Views",
-    //   summary: "Modern home with infinite views from the infinity pool",
-    //   property_type: "House",
-    //   bedrooms: 6,
-    //   bathrooms: 4.5,
-    //   beds: 8,
-    //   datesReserved: [new Date("2021-12-31"), new Date("2022-01-01")],
-    // });
+    await createOne(client, {
+      name: "Coba Doang dah",
+      summary: "Modern home with infinite views from the infinity pool",
+      property_type: "House",
+      bedrooms: 6,
+      bathrooms: 4.5,
+      beds: 8,
+      datesReserved: [new Date("2021-12-31"), new Date("2022-01-01")],
+    });
 
     // await createMany(client, [
-    // {
+    //   {
     //     name: "roxyzc",
     //     username: "d",
     //     age: 16,
-    //     address: [
-    //         {no: 3}
-    //     ]
-    // },
-    // {
+    //     address: [{ no: 3 }],
+    //   },
+    //   {
     //     name: "roxyzc",
     //     username: "b",
-    //     age: 13
-    // },
+    //     age: 13,
+    //   },
     //   {
     //     name: "roxyzc",
     //     dates: [
@@ -55,15 +53,15 @@ async function main() {
 
     // await findOne(client, "roxyzc");
 
-    // await findListingsWithMinimum(client, {maximumNumberOfResult: 4});
-
+    // await findListingsWithMinimum(client, { maximumNumberOfResult: 10 });
+    // await findMany(client);
     // await update(client, 18, {name: "manusia"});
 
     // await upsert(client, "rox", {name: "roxyzcccc"});
 
     // await updateAllListingsToHavePropertyType(client);
-
-    // await deleteListingNameOrAge(client, "roxyzc");
+    //
+    await deleteListingNameOrAge(client, "Coba Doang dah");
     // await deleteManyListing(client);
     // await printAggregation(client, "roxyzc", 10)
     // await createReservation(
@@ -93,7 +91,7 @@ async function main() {
     // await createReservation(
     //   client,
     //   "example@example.com",
-    //   "Infinite Views",
+    //   "Infinite Viewsss",
     //   [new Date("2021-12-31"), new Date("2022-01-01")],
     //   {
     //     pricePerNigth: 100,
@@ -101,15 +99,6 @@ async function main() {
     //     breakfastIncluded: true,
     //   }
     // );
-
-    const pipeline = [
-      {
-        $match: {
-          operationType: "insert",
-        },
-      },
-    ];
-    await monitorListingsUsingEventEmitter(client, 150000, pipeline);
   } catch (error) {
     console.log(error);
   } finally {
@@ -118,55 +107,6 @@ async function main() {
 }
 
 main().catch(console.error);
-
-async function monitorListingsUsingHashNext(
-  client,
-  timeInMs = 60000,
-  pipeline = []
-) {
-  const collection = client.db("sample").collection("cobaDoang");
-  const changeStream = collection.watch(pipeline);
-
-  closeChangeStream(timeInMs, changeStream);
-
-  try {
-    while (await changeStream.hashNext()) {
-      console.log(await changeStream.next());
-    }
-  } catch (error) {
-    if (changeStream.closed) {
-      console.log(
-        "The change stream is closed. will not wait on any more changes"
-      );
-    } else {
-      throw error;
-    }
-  }
-}
-
-async function monitorListingsUsingEventEmitter(
-  client,
-  timeInMs = 60000,
-  pipeline = []
-) {
-  const collection = client.db("sample").collection("cobaDoang");
-  const changeStream = collection.watch(pipeline);
-  changeStream.on("change", (next) => {
-    console.log(next);
-  });
-
-  await closeChangeStream(timeInMs, changeStream);
-}
-
-function closeChangeStream(timeInMs = 60000, changeStream) {
-  return new Promise((resolve) => {
-    setTimeout(() => {
-      console.log("Closing the change stream");
-      changeStream.close();
-      resolve();
-    }, timeInMs);
-  });
-}
 
 async function createReservation(
   client,
@@ -426,5 +366,21 @@ async function findOne(client, nameOfListing) {
       `Found a listing in the collection with the name '${nameOfListing}'`
     );
     console.log(result);
+  }
+}
+
+async function findMany(client) {
+  const cursor = await client
+    .db("sample")
+    .collection("cobaDoang")
+    .find({})
+    .sort({ age: -1 });
+  const result = await cursor.toArray();
+  if (result.length > 0) {
+    result.forEach((result, i) => {
+      console.log(`${i + 1}. name: ${result.name}`);
+    });
+  } else {
+    console.log("...");
   }
 }
